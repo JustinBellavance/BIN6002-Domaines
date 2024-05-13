@@ -4,7 +4,7 @@ import sys
 
 # hypothetical proteins (hp) extraction
 # python hp-extract dp-proteome.faa > hp-sub.faa
-def extract_hypthetical_proteins(input_file):
+def extract_hypthetical_proteins_with_domains(input_file):
 
 	with open(input_file) as f:
 
@@ -21,6 +21,20 @@ def extract_hypthetical_proteins(input_file):
 			if print_line:
 				print(line, end="")
 
+def extract_hypthetical_proteins(input_file):
+
+	with open(input_file) as f:
+
+		print_line = False
+
+		for line in f:
+			if line[0] == ">":
+				print_line = False
+				if "product=hypothetical protein" in line:
+					print_line = True
+
+			if print_line:
+				print(line, end="")
 
 
 if __name__ == "__main__":
@@ -28,6 +42,8 @@ if __name__ == "__main__":
 	if len(sys.argv) < 2:
 		print("input file missing")
 		print("ex: python hp-extract dp-proteome.faa > hp-sub.faa")
-	else: 
+	elif len(sys.argv) == 3 and sys.argv[2] == "--all":
 		extract_hypthetical_proteins(sys.argv[1])
+	else: 
+		extract_hypthetical_proteins_with_domains(sys.argv[1])
 
