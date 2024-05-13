@@ -12,4 +12,4 @@ sudo apt-get install bioperl bioperl-run
 ./SMART_batch.pl --includePfam --inputFile ../hp-sub.faa --outputDirectory validation_test #pour tester
 ./SMART_batch.pl --includePfam --inputFile ../hp-sub-all.faa --outputDirectory validation_test #actuel
 
-# Avec les résultats du script, il faut un script python pour bien selectionner les domaines avec des bons e-values. (moins que 0.01)
+# Avec les résultats du script, il faut un script python pour bien selectionner les domaines avec des bons e-values. Ils ont un different status que les autres. (moins que 0.01)
