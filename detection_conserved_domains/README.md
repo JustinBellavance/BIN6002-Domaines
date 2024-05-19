@@ -27,3 +27,8 @@ for i in {1..12}
 do
     grep -v "^#" part-${i}_hitdata.txt| awk 'NR>2{print $1}' | sort | uniq -c | awk '{if ($1 > 1){print $0}}' >> multi_domain_query.txt
 done
+
+
+# Pour telecharger les FASTA de PFAM:
+
+wget https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz

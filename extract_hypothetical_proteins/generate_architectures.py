@@ -82,7 +82,7 @@ def process_cdbatch_results(cdbatch_results_filename):
 				current_sequence_domains.append((seq_name,entry[7],entry[8].split()[0],int(entry[3]),int(entry[4]),float(entry[5])))
 
 		else:
-			process_architecture(current_sequence ,current_sequence_domains)
+			process_architecture(current_sequence, current_sequence_domains)
 
 
 if __name__ == "__main__":
