@@ -1,0 +1,5 @@
+prot1	domaine2,domaine1,domaine3
+prot2	domaine1,domaine4,domaine1,domaine5
+prot3	domaine1,domaine2,domaine3,domaine5
+prot4	domaine1,domaine5,domaine6,domaine3
+prot5	domaine6,domaine5,domaine1

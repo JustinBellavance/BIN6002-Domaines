@@ -1,6 +1,58 @@
-import sys
 import numpy as np
-import csv
+import sys
+
+def compute_weight_score_of_domains(dict_of_domains:dict):
+    total_proteins = len(dict_of_domains.keys())
+    domain_count = {}
+    domain_distinct_neighbor = {}
+
+    # Iterating through each domain for each protein sequence
+    for prot_domains in dict_of_domains.values():
+        prot_domain_count = len(prot_domains)
+
+        # Count number of times domains appear in each sequence
+        for index, domain in enumerate(prot_domains):
+            if domain not in domain_count:
+                domain_count[domain] = 1
+            else:
+                domain_count[domain] += 1  
+
+            # List for each distinct neighbor of a domain found in sequences
+            if domain not in domain_distinct_neighbor:
+                domain_distinct_neighbor[domain] = []
+
+            # For domains at the start of the sequence
+            if index == 0:
+                if prot_domains[index + 1] not in domain_distinct_neighbor[domain]:
+                    domain_distinct_neighbor[domain].append(prot_domains[index + 1])
+            # For domains between start and end of the sequence
+            elif 0 < index < prot_domain_count - 1:
+                if prot_domains[index - 1] not in domain_distinct_neighbor[domain]:
+                    domain_distinct_neighbor[domain].append(prot_domains[index - 1])
+                if prot_domains[index + 1] not in domain_distinct_neighbor[domain]:
+                    domain_distinct_neighbor[domain].append(prot_domains[index + 1])
+            # For domains at the end of the sequence
+            elif index == prot_domain_count - 1:
+                if prot_domains[index - 1] not in domain_distinct_neighbor[domain]:
+                    domain_distinct_neighbor[domain].append(prot_domains[index - 1])
+
+    # Counting the number of unique neighbors for each domain
+    for key, domains in domain_distinct_neighbor.items():
+        domain_distinct_neighbor[key] = len(set(domains))
+
+    domain_weight_score = {}
+    domain_weight_score.update(domain_count)
+    #Calculating IAF
+    for key, domains in domain_count.items():
+        domain_count[key] = np.log2(total_proteins/domain_count[key]) 
+    #Calculating IV 
+    for key, domains in domain_distinct_neighbor.items():
+        domain_distinct_neighbor[key] = 1/domain_distinct_neighbor[key]
+
+    for key in domain_count.keys() & domain_distinct_neighbor.keys() & domain_weight_score.keys(): 
+        domain_weight_score[key] = domain_count[key]*domain_distinct_neighbor[key]
+
+    return(domain_weight_score)
 
 def protein_architecture_weight_vector(domain_weight_scores:dict,prot_architectures:dict):
     prot_architectures_weights = {}
@@ -11,7 +63,6 @@ def protein_architecture_weight_vector(domain_weight_scores:dict,prot_architectu
         for domain in prot_domains:
             prot_architectures_weights[key].append(domain_weight_scores[domain])
     return prot_architectures_weights
-
 
 def compare_domain_architectures(X, Y) -> float:
     """
@@ -42,7 +93,7 @@ def compare_with_domain_orders(X, Y) -> float:
                     Qs += 1
     return Qs / Qt
 
-def convert_file_to_dict(file):
+def convert_file_to_dict(file,remove_spaces=False):
     """
     Input: file path to a file containing protein sequences in format: 
     Sequence1_name\tDomain1,Domain2,Domain3
@@ -52,7 +103,10 @@ def convert_file_to_dict(file):
     """
     dict_of_domains = {}
     with open(file, "r") as f:
+
         for line in f:
+            if remove_spaces:
+                line = line.replace(' ', '')
             line = line.strip()
             if not line:
                 continue  # Skip empty lines
@@ -65,53 +119,40 @@ def convert_file_to_dict(file):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Error: Wrong input provided.")
-        print("Usage: python similarity_score_calculation.py refseq_weight_scores.csv refseq_prot_weights.csv query_prot_architectures.txt")
+    if len(sys.argv) < 2:
+        print("Error: No input file provided.")
+        print("Usage: python weight_score_calculation.py refseq_architectures.txt query_architectures.txt")
         sys.exit(1)
     
-    #Load csv weight scores matrix of DOMAINS
-    weight_scores_file = sys.argv[1]
-    weight_scores = {}
-    # Open the CSV file
-    with open(weight_scores_file, mode='r', newline='') as csvfile:
-        # Create a reader object with the appropriate delimiter
-        csvreader = csv.reader(csvfile, delimiter=';')
-        
-        # Iterate over each row in the CSV
-        for row in csvreader:
-            # Use the first column as the key and the second column as the value, converting both to integers
-            weight_scores[str(row[0])] = float(row[1])
+    refseq_arch = convert_file_to_dict(sys.argv[1], remove_spaces=True)
+    query_arch = convert_file_to_dict(sys.argv[2], remove_spaces=True)
+    dict_of_domains = {**refseq_arch, **query_arch}
 
-    #Load query proteins architectures
-    query_prot_architectures_file = sys.argv[2]
-    query_prot_architectures = convert_file_to_dict(query_prot_architectures_file)
+    domains_weight_scores = compute_weight_score_of_domains(dict_of_domains)
+   
+    # Write the dictionary to a .txt file with tab-separated columns
+    with open('weight_scores.txt', 'w') as txtfile:
+        for key, value in domains_weight_scores.items():
+            txtfile.write(f"{key}\t{value}\n")
+
+    refseq_weights = protein_architecture_weight_vector(domain_weight_scores=domains_weight_scores,prot_architectures=refseq_arch)
+
+    # Write the dictionary to a .txt file with tab-separated columns
+    with open('refseq_weights.txt', 'w') as txtfile:
+        for key, value in refseq_weights.items():
+            txtfile.write(f"{key}\t{value}\n")
+
+    query_weights = protein_architecture_weight_vector(domain_weight_scores=domains_weight_scores,prot_architectures=query_arch)
+
+    # Write the dictionary to a .txt file with tab-separated columns
+    with open('query_weights.txt', 'w') as txtfile:
+        for key, value in query_weights.items():
+            txtfile.write(f"{key}\t{value}\n")
+
     
-    #Give weight scores to query proteins
-    query_weight_vector = protein_architecture_weight_vector(query_prot_architectures,weight_scores)
-
-    #Load refseq proteins weight architectures vectors
-    refseq_weight_vectors_file = sys.argv[3]
-    refseq_weight_vectors = {}
-    
-    #Load 
-    with open(refseq_weight_vectors_file, mode='r', newline='') as csvfile:
-        # Create a reader object with the appropriate delimiter
-        csvreader = csv.reader(csvfile, delimiter=';')
-        
-        # Iterate over each row in the CSV
-        for row in csvreader:
-            # Use the first column as the key and the second column as the value, converting both to integers
-            refseq_weight_vectors[str(row[0])] = list(row[1])
-
     #Iterate through query prot sequences
-    for query in query_weight_vector.values():
-        for refseq in refseq_weight_vectors.values():
-            print(compare_domain_architectures(query,refseq))
-
-
-    # # Write the dictionary to a CSV file
-    # with open('refseq_weight_scores.csv', 'w', newline='') as csvfile:
-    #     csv_writer = csv.writer(csvfile)
-    #     for key, value in domains_weight_scores.items():
-    #         csv_writer.writerow([key, value])
+    for query_key, query_weight in query_weights.items():
+        for refseq_key, refseq_weight in refseq_weights.items():
+            print(query_weight)
+            print(refseq_weight)
+            print(compare_domain_architectures(query_weight,refseq_weight))
