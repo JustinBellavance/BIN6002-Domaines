@@ -44,7 +44,8 @@ def process_architecture(seq_name ,domains):
 				domains.remove(dom)
 
 	if len(domains) > 1: 
-		print(seq_name, ",".join(map(lambda domain: domain[2] ,domains)), sep="\t")
+		#print(seq_name, ",".join(map(lambda domain: domain[2] ,domains)), sep="\t")
+		print(seq_name, ",".join(map(lambda domain: domain[1] + ":" + domain[2],domains)), sep="\t")
 
 
 
