@@ -36,7 +36,7 @@ def submit_to_cdbatch(sequences):
 				else:
 					break
 
-	print("sopmething went wrong")
+	print("something went wrong")
 	exit()
 
 
@@ -82,9 +82,9 @@ if __name__ == '__main__':
 
 	job_id = submit_to_cdbatch(sequences)
 
-	time.sleep(10)
+	time.sleep(5)
 	
 	while not check_job_status(job_id):
-		time.sleep(10)
+		time.sleep(5)
 
 	display_results(job_id)

@@ -27,12 +27,14 @@ def compare_with_domain_orders(X, Y) -> float:
                 Qt += 1
                 if i == j:
                     Qs += 1
+    if (Qt == 0 or Qs == 0):
+        return 0
     return Qs / Qt
 
 def compute_weight_score_of_domain(domains:list, unique_domain_index:dict) -> list:
     """
     The domain weight score is the Inverse Abundance Frequency (IAF) multiplied by the Inverse Versatility (IV) of the domain.
-    The IAF has the formula IAF(d) - log2(pt/pd) where pt is the number of total proteins and pd is the numebr of proteins containing domain d.
+    The IAF has the formula IAF(d) - log2(pt/pd) where pt is the number of total proteins and pd is the number of proteins containing domain d.
     The IV has the formula IV(d) = 1 / fd where fd is the number of distinct domain families adjacent to domain d.
     This function returns a list of the domain weight scores for the given list of domains, within the assigned position of unique_domain_index. Domains that are not present get 0 at that position.
     """
@@ -87,10 +89,24 @@ def create_unique_domain_vector(dict_of_domains:dict) -> dict:
                 index += 1
     return unique_domain_index
 
+def compare_proteins_to_reference(query:dict, reference:dict):
+    """
+    Compare a query set of proteins to a reference set of proteins.
+    Output: Cosine similarities and order similarities between each query proteins and each reference proteins.
+    """
+    unique_domain_index = create_unique_domain_vector(reference)
+    for seq1 in query:
+        for seq2 in reference:
+            weight_scores1 = compute_weight_score_of_domain(query[seq1], unique_domain_index)
+            weight_scores2 = compute_weight_score_of_domain(reference[seq2], unique_domain_index)
+            cosine_similarity = compare_domain_architectures(weight_scores1, weight_scores2)
+            order_similarity = compare_with_domain_orders(query[seq1], reference[seq2])
+            print(seq1, seq2, cosine_similarity, order_similarity, sep="\t")
+
 
 def run_all_functions(dict_of_domains:dict):
     """
-    Run function on all unqiue protein combinations in protein_list.
+    Run function on all unique protein combinations in protein_list.
     Don't compare a protein with a protein it has already been compared to. For example, if seq1="A" and seq2="B" have been compared, don't compare seq1="B" with seq2="A".
     Output: File with results of the functions written to it.
     """
@@ -112,9 +128,16 @@ def run_all_functions(dict_of_domains:dict):
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("input file missing")
-        print("ex: python formulas domaines.txt > results.txt")
-    else:
+        print("ex: python formulas.py domaines.txt > results.txt") # will compare all proteins in the file to each other
+        print("OR")
+        print("ex: python formulas.py query_domains.txt reference_domains.txt > results.txt") # will compare each protein in query_domains to each protein in reference_domains
+    elif len(sys.argv) == 2:
         dict_of_domains = convert_file_to_dict(sys.argv[1])
         print("Sequence1", "Sequence2", "Cosine Similarity", "Order Similarity", sep="\t")
         run_all_functions(dict_of_domains)
+    elif (len(sys.argv) == 3):
+        query = convert_file_to_dict(sys.argv[1])
+        reference = convert_file_to_dict(sys.argv[2])
+        print("Sequence1", "Sequence2", "Cosine Similarity", "Order Similarity", sep="\t")
+        compare_proteins_to_reference(query, reference)
 
