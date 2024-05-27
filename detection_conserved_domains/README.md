@@ -23,12 +23,42 @@ sudo apt-get install bioperl bioperl-run
 # Avec les résultats du script, il faut un script python pour bien selectionner les domaines avec des bons e-values. Ils ont un different status que les autres. (moins que 0.01)
 
 rm multi_domain_query.txt
-for i in {1..12}
+for i in {0..315}
 do
     grep -v "^#" part-${i}_hitdata.txt| awk 'NR>2{print $1}' | sort | uniq -c | awk '{if ($1 > 1){print $0}}' >> multi_domain_query.txt
+done
+
+# pour combiner les resultats de domaines 
+rm domain_results_combined.txt
+head -n 8 part-0_hitdata.txt > domain_results_combined.txt
+for i in {0..1178}
+do
+    grep -v "^#" part-${i}_hitdata.txt| awk 'NR>2{print $0}' >> domain_results_combined.txt
 done
 
 
 # Pour telecharger les FASTA de PFAM:
 
 wget https://ftp.ebi.ac.uk/pub/databases/Pfam/current_release/Pfam-A.fasta.gz
+
+# run all files
+
+for i in {0..333}
+do
+    python cd_batch.py ../refseq_protozoa/part-${i}.faa > ../Batch-CD-protozoa_results/part-${i}_hitdata.txt
+done
+
+for i in {334..667}
+do
+    python cd_batch.py ../refseq_protozoa/part-${i}.faa > ../Batch-CD-protozoa_results/part-${i}_hitdata.txt
+done
+
+for i in {667..1000}
+do
+    python cd_batch.py ../refseq_protozoa/part-${i}.faa > ../Batch-CD-protozoa_results/part-${i}_hitdata.txt
+done
+
+for i in {1000..1178}
+do
+    python cd_batch.py ../refseq_protozoa/part-${i}.faa > ../Batch-CD-protozoa_results/part-${i}_hitdata.txt
+done
