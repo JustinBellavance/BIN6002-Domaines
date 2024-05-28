@@ -23,7 +23,7 @@ python3 hp_extract.py data/dp-proteome.faa > data/hp-sub.faa
 Or to include those who dont have domains, add `--all-hp` after the input file. (! might make it default)
 
 ```bash
-python3 hp_extract.py data/dp-proteome.faa --all-hp > data/hp-sub.faa
+python3 hp_extract.py data/dp-proteome.faa --all-hp > data/hp-all.faa
 ```
 
 #### 3. Generate domain architectures for input queries
