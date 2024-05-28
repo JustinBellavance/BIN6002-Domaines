@@ -41,7 +41,7 @@ Than to submit the sequences to cd-batch run
 python3 cd_batch.py data/hp-sub.faa > data/cd-batch-results.tsv
 ```
 
-This will output results to `cd-batch-results.tsv` as specified, a tmp folder might be created during the process.
+This will output results to `cd-batch-results.tsv` as specified.
 To generate architectures from the cd-batch results run
 ```bash
 python3 generate_architectures_from_cdbatch.py data/cd-batch-results.tsv > data/hp-architectures.tsv
