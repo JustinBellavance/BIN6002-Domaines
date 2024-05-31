@@ -1,3 +1,0 @@
-Sequence1	domaine1,domaine2,domaine3
-Sequence2	domaine1,domaine3,domaine4,domaine5
-Sequence3	domaine1,domaine2,domaine3,domaine5
