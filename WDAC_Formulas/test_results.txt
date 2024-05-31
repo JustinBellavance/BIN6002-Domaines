@@ -1,0 +1,2 @@
+Sequence1	Sequence2	Cosine Similarity	Order Similarity
+[0]

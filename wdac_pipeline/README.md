@@ -7,7 +7,7 @@
 
 If not already done gunzip the reference database (download from slack)
 ```bash
-gunzip uniprot_db/uniprot_archs.gz
+gunzip uniprot_db/uniprot_archs.tsv.gz
 ```
 
 Than calculate domain weights and save them into a file

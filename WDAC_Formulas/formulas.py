@@ -52,6 +52,7 @@ def compute_weight_score_of_domain(domains:list, unique_domain_index:dict) -> li
         domain_families[domains[i]].add(domains[i-1])
         domain_families[domains[i-1]].add(domains[i])
     weight_scores = [0] * len(unique_domain_index)
+    print(weight_scores)
     for domain in domain_count:
         fd = len(domain_families[domain])
         iaf = np.log2(total_proteins/domain_count[domain])
