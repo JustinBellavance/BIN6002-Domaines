@@ -66,7 +66,7 @@ hmmpress data/Pfam-A.hmm
 
 Then run  hmmrscan on the hypthetical proteins file
 ```bash
-hmmscan --domtblout data/hmmscan-results.tbl --noali -E 1e-5 data/Pfam-A.hmm data/hp-sub.faa
+hmmscan --domtblout data/hmmscan-results.tbl --noali -E 0.01 data/Pfam-A.hmm data/hp-sub.faa
 ```
 
 To generate architectures run the command below
