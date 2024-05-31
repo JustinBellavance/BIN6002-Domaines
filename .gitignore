@@ -1,5 +1,4 @@
 *.faa
 .venv/*
-detection_conserved_domains/validation_test/*
-hp-sub-no_domains_batches/*
-Batch-CD_results/*
+data/*
+software/*
