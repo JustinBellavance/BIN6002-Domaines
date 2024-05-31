@@ -20,22 +20,30 @@ def magnitude(Z):
 
 
 def sim(X,Y):
+	if magnitude(X) == 0 or magnitude(Y) == 0:
+		return 0
 	return dot(X,Y) / (magnitude(X)*magnitude(Y))
 
 
 
-def order(X,Y): # from formulas.py
+def order(query_domains:list,reference_domains:list) -> float: # from formulas.py
 	Qs = 0
 	Qt = 0
-	for i in range(len(X)):
-		for j in range(len(Y)):
-			if X[i] == Y[j]:
-				Qt += 1
-				if i == j:
-					Qs += 1
-	if Qt != 0:
-		return Qs / Qt
-	return 0
+	
+	sublists1 = [query_domains[i:i+2] for i in range(len(query_domains) - 1)]
+	sublists2 = [reference_domains[i:i+2] for i in range(len(reference_domains) - 1)]
+	
+	for sublist in sublists1:
+		if sublist in sublists2:
+			Qs += 1
+		Qt += 1
+	
+	for sublist in sublists2:
+		if sublist in sublists1:
+			Qs += 1
+		Qt += 1
+	
+	return Qs / Qt if Qt != 0 else 0
 
 
 
@@ -68,31 +76,39 @@ def load_references(ref_architectures_filepath):
 def architecture_to_vector(architecture):
 	# return a vector of corresponding domain weights
 	# the -1 for unseen/novel domains in our reference db
-	return [DOMAIN_WEIGHTS.get(domain, -1) for domain in architecture]
+	return [DOMAIN_WEIGHTS.get(domain, -1) for domain in set(architecture)]
 
 
 def wdac(input_seqname, input_arch):
-	
-	seq_vec = architecture_to_vector(input_arch)
+
+	#get unique domains	
+	seq_vec = architecture_to_vector(set(input_arch))
 
 	sims = list()
 	
 	for ref in REF_ARCHITECTURES.keys(): 
-
+		input_arch_set = set(input_arch)
 		tmp_vec = seq_vec.copy()
 
+		ref_arch_set = set(REF_ARCHITECTURES[ref])
 		ref_vec = architecture_to_vector(REF_ARCHITECTURES[ref])
-	
-		ref_vec_len = len(ref_vec)
-		tmp_vec_len = len(tmp_vec)
 
-		if ref_vec_len > tmp_vec_len:
-			tmp_vec += [0] * (ref_vec_len - tmp_vec_len)
-		elif ref_vec_len < tmp_vec_len:
-			ref_vec += [0] * (tmp_vec_len - ref_vec_len)
-			
-		sim_score = sim(tmp_vec, ref_vec)
-		order_score = order(seq_vec, ref_vec)
+		combined_set = input_arch_set.union(ref_arch_set)
+		combined_list = list(combined_set)
+		index_map = {domain: i for i, domain in enumerate(combined_list)}
+
+		new_tmp_vec = [0] * len(combined_list)
+		new_ref_vec = [0] * len(combined_list)
+
+		for domain, value in zip(input_arch_set, tmp_vec):
+			new_tmp_vec[index_map[domain]] = value
+
+		for domain, value in zip(ref_arch_set, ref_vec):
+			new_ref_vec[index_map[domain]] = value
+
+		
+		sim_score = sim(new_tmp_vec, new_ref_vec)
+		order_score = order(input_arch, REF_ARCHITECTURES[ref])
 
 		sims.append(
 		    [
@@ -111,7 +127,7 @@ def wdac(input_seqname, input_arch):
 	sims.sort(reverse=True, key=lambda entry: entry[4])
 
 
-	for i in range(10):
+	for i in range(20):
 		print("\t".join(map(str,sims[i])))
 	
 

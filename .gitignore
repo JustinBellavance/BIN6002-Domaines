@@ -2,3 +2,4 @@
 .venv/*
 data/*
 software/*
+scripts/WDAC_Formulas/domain_weight_scores.txt

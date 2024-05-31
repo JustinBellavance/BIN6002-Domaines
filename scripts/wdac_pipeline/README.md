@@ -12,7 +12,7 @@ gunzip uniprot_db/uniprot_archs.tsv.gz
 
 Than calculate domain weights and save them into a file
 ```bash
-python3 calc_weights.py uniprot_db/uniprot_archs.tsv > uniprot_db/domain_weights.tsv
+python3 calc-weights.py uniprot_db/uniprot_archs.tsv > uniprot_db/domain_weights.tsv
 ```
 
 #### 2. Extract hypothetical proteins
