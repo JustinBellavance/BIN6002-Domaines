@@ -76,7 +76,7 @@ if __name__ == "__main__":
     protein_name\tdomain1_name:domain1_label,domain2_name:domain2_label,...
     """
     if len(sys.argv) != 2:
-        print("Usage: python formulas.py <reference_file>")
+        print("Usage: python calculate-reference-weight-scores.py all_architectures.txt > weight_scores.txt")
         sys.exit(1)
     reference_file = sys.argv[1]
     domains = {}

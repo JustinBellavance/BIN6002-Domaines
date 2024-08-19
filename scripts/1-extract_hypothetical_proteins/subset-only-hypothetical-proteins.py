@@ -56,7 +56,7 @@ if __name__ == "__main__":
 
 	if len(sys.argv) < 2:
 		print("input file missing")
-		print("ex: python hp-extract dp-proteome.faa > hp-sub.faa")
+		print("ex: python subset-only-hypothetical-proteins.py dp-proteome.faa > hp-sub.faa")
 	elif len(sys.argv) == 3 and sys.argv[2] == "--all":
 		extract_hypothetical_proteins(sys.argv[1])
 	elif len(sys.argv) == 3 and sys.argv[2] == "--empty":

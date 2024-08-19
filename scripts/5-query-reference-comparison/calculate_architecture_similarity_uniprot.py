@@ -3,7 +3,7 @@ import sys
 
 DOMAIN_WEIGHTS = dict()
 REF_ARCHITECTURES = dict()
-
+BLASTP_RESULTS = dict()
 
 def dot(X,Y):
 	d = 0
@@ -19,7 +19,7 @@ def magnitude(Z):
 	return math.sqrt(m)
 
 
-def sim(X,Y):
+def similarity(X,Y):
 	if magnitude(X) == 0 or magnitude(Y) == 0:
 		return 0
 	return dot(X,Y) / (magnitude(X)*magnitude(Y))
@@ -45,8 +45,6 @@ def order(query_domains:list,reference_domains:list) -> float: # from formulas.p
 	
 	return Qs / Qt if Qt != 0 else 0
 
-
-
 def load_domains_weights(domain_weights_filepath):
 	global DOMAIN_WEIGHTS
 
@@ -71,6 +69,17 @@ def load_references(ref_architectures_filepath):
 				architecture.append(_domain.split(":")[1])
 			
 			REF_ARCHITECTURES[l[:-1].split("\t")[0]] = architecture
+   
+def load_blastp_results(blastp_results_filepath):
+	global BLASTP_RESULTS
+
+	with open(blastp_results_filepath) as f:
+		for l in f:
+			l = l.split("\t")
+			query = l[0]
+			reference = l[1]
+			bit_score = float(l[11])
+			BLASTP_RESULTS.setdefault(query, []).append({reference: bit_score})
 
 
 def architecture_to_vector(architecture):
@@ -106,29 +115,33 @@ def wdac(input_seqname, input_arch):
 		for domain, value in zip(ref_arch_set, ref_vec):
 			new_ref_vec[index_map[domain]] = value
 
-		
-		sim_score = sim(new_tmp_vec, new_ref_vec)
+		sim_score = similarity(new_tmp_vec, new_ref_vec)
 		order_score = order(input_arch, REF_ARCHITECTURES[ref])
+  
+		if ((sim_score + order_score) / 2) > 0.75:
 
-		sims.append(
-		    [
-		        input_seqname,
-		        ref,
-		        sim_score,
-		        order_score,
-		        sim_score + order_score,
-		        ",".join(input_arch),
-		        ",".join(REF_ARCHITECTURES[ref]),
-		    ]
-		)
+			sims.append(
+				[
+					input_seqname,
+					ref,
+					sim_score,
+					order_score,
+					(sim_score + order_score) / 2,
+					",".join(input_arch),
+					",".join(REF_ARCHITECTURES[ref]),
+				]
+			)
 
 		#print(ref,s, o, s+o, sep="\t")
 
 	sims.sort(reverse=True, key=lambda entry: entry[4])
+	
 
-
-	for i in range(20):
-		print("\t".join(map(str,sims[i])))
+	# print(sims)
+	return(sims)
+	# for i in range(50):
+	# 	if (sims[i][4] > 1.75):
+	# 		print("\t".join(map(str,sims[i])), flush = True)
 	
 
 
@@ -153,39 +166,73 @@ def test():
 		elif ref_vec_len < tmp_vec_len:
 			ref_vec += [0] * (tmp_vec_len - ref_vec_len)
 			
-		s = sim(tmp_vec, ref_vec)
+		s = similarity(tmp_vec, ref_vec)
 		o = order(seq_vec, ref_vec)
+		print(ref,s, o, s+o, sep="\t", flush = True)
 
-		print(ref,s, o, s+o, sep="\t")
-
-
+def getBlastBitScore(query, reference):
+	if query in BLASTP_RESULTS:
+		for entry in BLASTP_RESULTS[query]:
+			if reference in entry:
+				return entry[reference]
+	return "NA"
 
 if __name__ == '__main__':
 
 	if len(sys.argv) < 4:
-		print("Usage: python3 calculate_architecture_similarity.py ref_architectures.tsv domain_weights.tsv input_architectures.tsv")
+		print("Usage: python3 calculate_architecture_similarity.py ref_architectures.tsv domain_weights.tsv input_architectures.tsv > comparison_results.txt")
+  		#print("Usage: python3 calculate_architecture_similarity.py ref_architectures.tsv blastp_scores.txt domain_weights.tsv input_architectures.tsv")
 		exit()
 
-	print("Loading domain weights into memory ... ", end="")
+	print("# Loading domain weights into memory ... ", end="")
 	sys.stdout.flush()
 	load_domains_weights(sys.argv[2])
-	print("done.")
+	print(" 	done.", flush = True)
+ 
+	# print new way to calculate using blastp
+	# print("# Loading BLASTP results into memory ... ", end="", flush=True)
+	# load_blastp_results(sys.argv[3])
+	# print(" 	done.", flush = True)
 
-	print("Loading ref architectures into memory ... ", end="")
+	print("# Loading ref architectures into memory ... ", end="")
 	sys.stdout.flush()
 	load_references(sys.argv[1])
-	print("done.")
+	print(" 	done.", flush = True)
 
+	wdac_results = {}
+ 
+	# i = 0
 
 	with open(sys.argv[3]) as f:
+		
 		for query in f:
-
 			query = query.split("\t")
 
 			query_seq_name = query[0]
 			query_architecture = [d.split(":")[1] for d in query[1][:-1].split(",")]
+   			
+			sims = wdac(query_seq_name, query_architecture)
+			wdac_results[query_seq_name] = sims
+	
+	for seqname, sims_list in wdac_results.items():
+       
+		if (len(sims_list) > 0):
+			unique_architectures = {}
 
-			print("-" * 50)
-			print("Searching for homologs for ", query_seq_name, query_architecture)
-			
-			wdac(query_seq_name, query_architecture)
+			#print(sims_list)
+			for sims in sims_list:
+				unique_architectures.setdefault(sims[6], []).append(sims)
+				#print(unique_architectures)
+				for unique_architecture, sims_list in unique_architectures.items():
+					print("# " + seqname + " 			: " + sims_list[0][5], flush = True)
+					print("# Architecture de Référence 	: " + unique_architecture, flush = True)
+					print("#prot_id\tmean_score(cos+order/2)", flush=True)
+				
+					for sims in sims_list:
+						print(sims[1], sims[4], flush=True)
+
+						#bitscore = getBlastBitScore(seqname, sims[1])
+						#print(sims[1], sims[4], bitscore, flush=True)
+					
+					# for now, keep it to only one per unique architecture
+					break

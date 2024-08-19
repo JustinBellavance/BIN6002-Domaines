@@ -94,6 +94,6 @@ def process_hmmscan_results(hmmscan_results_filename):
 
 if __name__ == "__main__":
 	if len(sys.argv) < 2:
-		print("usage: python", sys.argv[0], "hmmscan.results.tbl")
+		print("usage: python generate_archtectures-from_hmmscan.py hmmscan-results_uniprot.txt > all_architectures.txt")
 		exit()
 	process_hmmscan_results(sys.argv[1]) 
