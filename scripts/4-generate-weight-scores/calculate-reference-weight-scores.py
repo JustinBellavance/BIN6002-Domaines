@@ -56,16 +56,14 @@ def compute_weight_score_of_domain(domains:dict, proteins:dict) -> None:
             if i != len(proteins[protein]) - 1:
                 domain_families[proteins[protein][i]].add(proteins[protein][i+1])
     weight_scores = {}
-    print(domain_families)
     for domain in domain_count:
-        print(domain)
         fd = len(domain_families[domain])
         iaf = np.log2(total_proteins/domain_count[domain])
         iv = 1/fd
         weight_scores[domain] = iaf * iv
     with open("domain_weight_scores.txt", "w") as f:
         for domain in weight_scores:
-            f.write(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}\n")
+            print(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}\n")
 
 
 
