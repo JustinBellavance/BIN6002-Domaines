@@ -40,7 +40,6 @@ def calc_domain_weight(domain):
 	for architecture in ARCHITECTURES:
 			
 			if domain in architecture:
-				print(architecture)
 				domain_containing_proteins += 1
 
 				for i,dom in enumerate(architecture):
