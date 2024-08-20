@@ -49,14 +49,7 @@ def calc_domain_weight(domain):
 							distinct_neighbors.add(architecture[ i-1 ]) # add leftside neighbor
 						if i != len(architecture) -1 : # not the last domain
 							distinct_neighbors.add(architecture[ i+1 ]) # add rightside neighbor
-
-
-	
-	print("total_proteins", total_proteins)
-	print("domain_containing_proteins", domain_containing_proteins)
-
-	print(IAF(total_proteins, domain_containing_proteins))
-	print(IV(len(distinct_neighbors)), distinct_neighbors)
+							
 	return IAF(total_proteins, domain_containing_proteins) * IV(len(distinct_neighbors)) # * 10 
 
 
@@ -88,8 +81,7 @@ def main(ref_architectures_filepath):
 	load_architectures(ref_architectures_filepath)
 
 	for domain in get_all_uniq_domains():
-		if domain.split(":")[0] == "PF13297":
-			print("\t".join(domain.split(":")), calc_domain_weight(domain), sep="\t")
+		print("\t".join(domain.split(":")), calc_domain_weight(domain), sep="\t")
 
 
 if __name__ == '__main__':
