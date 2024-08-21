@@ -61,9 +61,9 @@ def compute_weight_score_of_domain(domains:dict, proteins:dict) -> None:
         iaf = np.log2(total_proteins/domain_count[domain])
         iv = 1/fd
         weight_scores[domain] = iaf * iv
-    with open("domain_weight_scores.txt", "w") as f:
-        for domain in weight_scores:
-            print(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}\n")
+    #with open("domain_weight_scores.txt", "w") as f:
+    for domain in weight_scores:
+        print(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}\n")
 
 
 
