@@ -43,7 +43,7 @@ def compute_weight_score_of_domain(domains:dict, proteins:dict) -> None:
     domain_count = {}
     domain_families = {}
     for protein in proteins:
-        for domain in proteins[protein]:
+        for domain in set(proteins[protein]):
             if domain not in domain_count:
                 domain_count[domain] = 0
             domain_count[domain] += 1
@@ -63,9 +63,7 @@ def compute_weight_score_of_domain(domains:dict, proteins:dict) -> None:
         weight_scores[domain] = iaf * iv
     #with open("domain_weight_scores.txt", "w") as f:
     for domain in weight_scores:
-        print(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}\n")
-
-
+        print(f"{domain}\t{domains[domain]}\t{weight_scores[domain]}")
 
 if __name__ == "__main__":
     """

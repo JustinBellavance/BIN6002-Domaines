@@ -85,7 +85,7 @@ def load_blastp_results(blastp_results_filepath):
 def architecture_to_vector(architecture):
 	# return a vector of corresponding domain weights
 	# the -1 for unseen/novel domains in our reference db
-	return [DOMAIN_WEIGHTS.get(domain, -1) for domain in set(architecture)]
+	return [DOMAIN_WEIGHTS.get(domain, 0) for domain in set(architecture)]
 
 
 def wdac(input_seqname, input_arch):
@@ -118,7 +118,8 @@ def wdac(input_seqname, input_arch):
 		sim_score = similarity(new_tmp_vec, new_ref_vec)
 		order_score = order(input_arch, REF_ARCHITECTURES[ref])
   
-		if ((sim_score + order_score) / 2) > 0.75:
+		# to reduce computation time, we want only to consider perfect matches for the rest of our pipeline.
+		if ((sim_score + order_score) / 2) > 1:
 
 			sims.append(
 				[
@@ -226,10 +227,10 @@ if __name__ == '__main__':
 				for unique_architecture, sims_list in unique_architectures.items():
 					print("# " + seqname + " 			: " + sims_list[0][5], flush = True)
 					print("# Architecture de Référence 	: " + unique_architecture, flush = True)
-					print("#prot_id\tmean_score(cos+order/2)", flush=True)
+					print("#code_diplonema\tarchitecture_query\tarchitecture_reference\tuniprot_id\tmean_score(cos+order/2)", flush=True)
 				
 					for sims in sims_list:
-						print(sims[1], sims[4], flush=True)
+						print(seqname,sims[5],unique_architecture,sims[1], sims[4], flush=True)
 
 						#bitscore = getBlastBitScore(seqname, sims[1])
 						#print(sims[1], sims[4], bitscore, flush=True)
