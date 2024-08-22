@@ -1,28 +1,27 @@
 import math
 import sys
+import numpy as np
+from collections import defaultdict
+
+REF_ARCHITECTURES = defaultdict(list)
+BLASTP_RESULTS = defaultdict(list)
 
 DOMAIN_WEIGHTS = dict()
-REF_ARCHITECTURES = dict()
-BLASTP_RESULTS = dict()
 
-def dot(X,Y):
-	d = 0
-	for i in range(len(X)):
-		d += (X[i]*Y[i])
-	return d
+import numpy as np
 
+def dot(X, Y):
+    return np.dot(X, Y)
 
 def magnitude(Z):
-	m = 0
-	for e in Z:
-		m += e**2
-	return math.sqrt(m)
+    return np.linalg.norm(Z)
 
-
-def similarity(X,Y):
-	if magnitude(X) == 0 or magnitude(Y) == 0:
-		return 0
-	return dot(X,Y) / (magnitude(X)*magnitude(Y))
+def similarity(X, Y):
+    mag_X = magnitude(X)
+    mag_Y = magnitude(Y)
+    if mag_X == 0 or mag_Y == 0:
+        return 0
+    return np.dot(X, Y) / (mag_X * mag_Y)
 
 
 
@@ -52,8 +51,6 @@ def load_domains_weights(domain_weights_filepath):
 		for entry in f:
 			entry = entry.split("\t")
 			DOMAIN_WEIGHTS[entry[1]] = float(entry[2][:-1]) * 10
-			
-
 
 def load_references(ref_architectures_filepath):
 	global REF_ARCHITECTURES
@@ -85,67 +82,45 @@ def load_blastp_results(blastp_results_filepath):
 def architecture_to_vector(architecture):
 	# return a vector of corresponding domain weights
 	# the -1 for unseen/novel domains in our reference db
-	return [DOMAIN_WEIGHTS.get(domain, 0) for domain in set(architecture)]
+    return [DOMAIN_WEIGHTS.get(domain, 0) for domain in architecture]
+	#return [DOMAIN_WEIGHTS.get(domain, 0) for domain in set(architecture)]
 
 
 def wdac(input_seqname, input_arch):
+    input_arch_set = set(input_arch)
+    seq_vec = architecture_to_vector(input_arch_set)
+    
+    sims = []
+    
+    for ref, ref_arch in REF_ARCHITECTURES.items():
+        ref_arch_set = set(ref_arch)
+        
+        combined_set = input_arch_set | ref_arch_set
+        combined_list = list(combined_set)
+        index_map = {domain: i for i, domain in enumerate(combined_list)}
 
-	#get unique domains	
-	seq_vec = architecture_to_vector(set(input_arch))
+        new_tmp_vec = np.zeros(len(combined_list))
+        new_ref_vec = np.zeros(len(combined_list))
 
-	sims = list()
-	
-	for ref in REF_ARCHITECTURES.keys(): 
-		input_arch_set = set(input_arch)
-		tmp_vec = seq_vec.copy()
+        for domain, value in zip(input_arch_set, seq_vec):
+            new_tmp_vec[index_map[domain]] = value
 
-		ref_arch_set = set(REF_ARCHITECTURES[ref])
-		ref_vec = architecture_to_vector(REF_ARCHITECTURES[ref])
+        ref_vec = architecture_to_vector(ref_arch_set)
+        for domain, value in zip(ref_arch_set, ref_vec):
+            new_ref_vec[index_map[domain]] = value
 
-		combined_set = input_arch_set.union(ref_arch_set)
-		combined_list = list(combined_set)
-		index_map = {domain: i for i, domain in enumerate(combined_list)}
+        sim_score = similarity(new_tmp_vec, new_ref_vec)
+        order_score = order(input_arch, ref_arch)
+        if (sim_score + order_score / 2) > 0.1:
+          sims.append([input_seqname, ref, sim_score, order_score, (sim_score + order_score) / 2, ",".join(input_arch), ",".join(ref_arch)])
 
-		new_tmp_vec = [0] * len(combined_list)
-		new_ref_vec = [0] * len(combined_list)
-
-		for domain, value in zip(input_arch_set, tmp_vec):
-			new_tmp_vec[index_map[domain]] = value
-
-		for domain, value in zip(ref_arch_set, ref_vec):
-			new_ref_vec[index_map[domain]] = value
-
-		sim_score = similarity(new_tmp_vec, new_ref_vec)
-		order_score = order(input_arch, REF_ARCHITECTURES[ref])
-  
-		# to reduce computation time, we want only to consider perfect matches for the rest of our pipeline.
-		if ((sim_score + order_score) / 2) > 1:
-
-			sims.append(
-				[
-					input_seqname,
-					ref,
-					sim_score,
-					order_score,
-					(sim_score + order_score) / 2,
-					",".join(input_arch),
-					",".join(REF_ARCHITECTURES[ref]),
-				]
-			)
-
-		#print(ref,s, o, s+o, sep="\t")
-
-	sims.sort(reverse=True, key=lambda entry: entry[4])
-	
-
-	# print(sims)
-	return(sims)
+    sims.sort(reverse=True, key=lambda entry: entry[4])
+    
+    return sims
 	# for i in range(50):
 	# 	if (sims[i][4] > 1.75):
 	# 		print("\t".join(map(str,sims[i])), flush = True)
 	
-
-
 
 def test():
 	input_arch = ["MULE", "OTU"]
@@ -215,25 +190,30 @@ if __name__ == '__main__':
 			sims = wdac(query_seq_name, query_architecture)
 			wdac_results[query_seq_name] = sims
 	
+ 
+ 
+	print("#rank\tcode_diplonema\tarchitecture_query\tarchitecture_reference\tuniprot_id\torder_sim\tcosine_sim\tmean_score(cos+order/2)", flush=True)
+
 	for seqname, sims_list in wdac_results.items():
        
 		if (len(sims_list) > 0):
 			unique_architectures = {}
 
 			#print(sims_list)
+			jindex = 1
 			for sims in sims_list:
+				if jindex < 11:
+					break
 				unique_architectures.setdefault(sims[6], []).append(sims)
 				#print(unique_architectures)
 				for unique_architecture, sims_list in unique_architectures.items():
-					print("# " + seqname + " 			: " + sims_list[0][5], flush = True)
-					print("# Architecture de Référence 	: " + unique_architecture, flush = True)
-					print("#code_diplonema\tarchitecture_query\tarchitecture_reference\tuniprot_id\tmean_score(cos+order/2)", flush=True)
 				
 					for sims in sims_list:
-						print(seqname,sims[5],unique_architecture,sims[1], sims[4], flush=True)
+						print(jindex, seqname,sims[5],unique_architecture,sims[1],sims[2], sims[3], sims[4], flush=True)
 
 						#bitscore = getBlastBitScore(seqname, sims[1])
 						#print(sims[1], sims[4], bitscore, flush=True)
 					
 					# for now, keep it to only one per unique architecture
-					break
+				jindex += 1
+    

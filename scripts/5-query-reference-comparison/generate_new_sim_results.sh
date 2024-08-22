@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH -J refseq_architecture_similarity
+#SBATCH -J archi_similarity
 #SBATCH --account=def-gsarah
-#SBATCH --time=00:59:00
-#SBATCH --mem=1G
+#SBATCH --time=02:59:00
+#SBATCH --mem=500G
 
 module load python/3.11.5
 python calculate_architecture_similarity_uniprot.py ../../architectures_uniprot.tsv ../../domain_weights.tsv ../../architectures_Diplonema.tsv > similarity_results_uniprot_3.0.txt
