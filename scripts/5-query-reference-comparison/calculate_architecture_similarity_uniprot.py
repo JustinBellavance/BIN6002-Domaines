@@ -58,7 +58,7 @@ def load_references(ref_architectures_filepath):
 	with open(ref_architectures_filepath) as f:
 		for l in f:
 			
-			architecture_with_id = l[:-1].split("\t")[1].split(",")[:-1]
+			architecture_with_id = l[:-1].split("\t")[1].split(",")
 			architecture = []
 
 			for _domain in architecture_with_id:
@@ -111,7 +111,7 @@ def wdac(input_seqname, input_arch):
 
         sim_score = similarity(new_tmp_vec, new_ref_vec)
         order_score = order(input_arch, ref_arch)
-        if (sim_score + order_score / 2) > 0.1:
+        if ((sim_score + order_score) / 2) > 0.1:
           sims.append([input_seqname, ref, sim_score, order_score, (sim_score + order_score) / 2, ",".join(input_arch), ",".join(ref_arch)])
 
     sims.sort(reverse=True, key=lambda entry: entry[4])
@@ -160,27 +160,27 @@ if __name__ == '__main__':
   		#print("Usage: python3 calculate_architecture_similarity.py ref_architectures.tsv blastp_scores.txt domain_weights.tsv input_architectures.tsv")
 		exit()
 
-	print("# Loading domain weights into memory ... ", end="")
+	#print("# Loading domain weights into memory ... ", end="")
 	sys.stdout.flush()
 	load_domains_weights(sys.argv[2])
-	print(" 	done.", flush = True)
+	#print(" 	done.", flush = True)
  
 	# print new way to calculate using blastp
 	# print("# Loading BLASTP results into memory ... ", end="", flush=True)
 	# load_blastp_results(sys.argv[3])
 	# print(" 	done.", flush = True)
 
-	print("# Loading ref architectures into memory ... ", end="")
+	#print("# Loading ref architectures into memory ... ", end="")
 	sys.stdout.flush()
 	load_references(sys.argv[1])
-	print(" 	done.", flush = True)
+	#print(" 	done.", flush = True)
 
 	wdac_results = {}
  
 	# i = 0
 
 	with open(sys.argv[3]) as f:
-		
+		#i = 0
 		for query in f:
 			query = query.split("\t")
 
@@ -189,31 +189,31 @@ if __name__ == '__main__':
    			
 			sims = wdac(query_seq_name, query_architecture)
 			wdac_results[query_seq_name] = sims
+			# i += 1
+			# if i > 50:
+			# 	break
 	
  
  
 	print("#rank\tcode_diplonema\tarchitecture_query\tarchitecture_reference\tuniprot_id\torder_sim\tcosine_sim\tmean_score(cos+order/2)", flush=True)
-
 	for seqname, sims_list in wdac_results.items():
-       
 		if (len(sims_list) > 0):
 			unique_architectures = {}
 
 			#print(sims_list)
-			jindex = 1
+			jindex = 0
+			last_ref_seq = []
 			for sims in sims_list:
-				if jindex < 11:
+				if jindex > 10:
 					break
-				unique_architectures.setdefault(sims[6], []).append(sims)
-				#print(unique_architectures)
-				for unique_architecture, sims_list in unique_architectures.items():
-				
-					for sims in sims_list:
-						print(jindex, seqname,sims[5],unique_architecture,sims[1],sims[2], sims[3], sims[4], flush=True)
+ 
+				if (last_ref_seq != sims[6] or last_ref_seq == []):
+					last_ref_seq = sims[6]
+					jindex += 1
+ 
+				print(jindex, seqname,sims[5],sims[6],sims[1],sims[2], sims[3], sims[4], flush=True)
 
 						#bitscore = getBlastBitScore(seqname, sims[1])
 						#print(sims[1], sims[4], bitscore, flush=True)
 					
 					# for now, keep it to only one per unique architecture
-				jindex += 1
-    
